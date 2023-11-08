@@ -1,7 +1,4 @@
-import torch
-from torch import nn, optim
-import torchvision
-import torchvision.transforms as transforms
+from torch import nn
 
 
 class BaseNet(nn.Module):
@@ -18,6 +15,9 @@ class BaseNet(nn.Module):
         self.filter_size = 3
         self.stride = 1
         self.padding = 1
+
+        # He initialization
+        self.apply(self.init_weights)
 
         # Define the first layer
         self.first_convolution = nn.Conv2d(
@@ -43,6 +43,11 @@ class BaseNet(nn.Module):
         self.fc_layer = nn.Linear(64, self.neurons_count)
         self.softmax_layer = nn.Softmax(dim=1)
 
+    @staticmethod
+    def init_weights(obj):
+        if isinstance(obj, nn.Linear) or isinstance(obj, nn.Conv2d):
+            nn.init.kaiming_uniform_(obj.weight)
+
     def create_module(self, input_channels_count, output_channels_count, filter_size, stride=None):
         layers = list()
         for layer_ind in range(self.layers_count):
@@ -64,6 +69,9 @@ class BaseNet(nn.Module):
             layers.append(layer_batch_norm)
             layers.append(layer_relu)
 
+            # From 2nd to each next layer, both the number of input and output channels are same
+            input_channels_count = output_channels_count
+
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -74,6 +82,7 @@ class BaseNet(nn.Module):
         x = self.module2(x)
         x = self.module3(x)
         x = self.global_average_pool(x)
+        x = x.view(x.size(0), -1)
         x = self.fc_layer(x)
         x = self.softmax_layer(x)
 

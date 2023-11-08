@@ -12,6 +12,19 @@ class ResidualBlock(nn.Module):
         self.stride = 1
         self.padding = 1
 
+        # He initialization
+        self.apply(self.init_weights)
+
+        # Define skip connection
+        self.skip_convolution = nn.Conv2d(
+            input_channels_count,
+            self.filters_count,
+            kernel_size=1,
+            stride=self.stride,
+            padding=0
+        )
+        self.skip_batch_normalization = nn.BatchNorm2d(self.filters_count)
+
         # Define the first layer
         self.first_convolution = nn.Conv2d(
             input_channels_count,
@@ -33,8 +46,13 @@ class ResidualBlock(nn.Module):
         )
         self.second_batch_normalization = nn.BatchNorm2d(self.filters_count)
 
+    @staticmethod
+    def init_weights(obj):
+        if isinstance(obj, nn.Linear) or isinstance(obj, nn.Conv2d):
+            nn.init.kaiming_uniform_(obj.weight)
+
     def forward(self, x):
-        identity = x
+        identity = self.skip_batch_normalization(self.skip_convolution(x))
         x = self.first_convolution(x)
         x = self.first_batch_normalization(x)
         x = self.relu(x)
@@ -61,6 +79,9 @@ class ResNet(nn.Module):
         self.stride = 1
         self.padding = 1
 
+        # He initialization
+        self.apply(self.init_weights)
+
         # Define the first layer
         self.first_convolution = nn.Conv2d(
             self.input_channels_count,
@@ -73,7 +94,7 @@ class ResNet(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
         # Create and get modules of residual blocks
-        self.module1 = self.create_module(self.input_channels_count, 16)
+        self.module1 = self.create_module(self.filters_count, 16)
         self.module2 = self.create_module(16, 32)
         self.module3 = self.create_module(32, 64)
 
@@ -84,6 +105,11 @@ class ResNet(nn.Module):
         # Defining fully connected layer where in_features count is 64 received from self.module3
         self.fully_connected_layer = nn.Linear(64, self.neurons_count)
         self.softmax_layer = nn.Softmax(dim=1)
+
+    @staticmethod
+    def init_weights(obj):
+        if isinstance(obj, nn.Linear) or isinstance(obj, nn.Conv2d):
+            nn.init.kaiming_uniform_(obj.weight)
 
     def create_module(self, input_channels_count, output_channels_count):
         blocks = list()
@@ -105,12 +131,8 @@ class ResNet(nn.Module):
         x = self.module2(x)
         x = self.module3(x)
         x = self.global_average_pool(x)
+        x = x.view(x.size(0), -1)
         x = self.fully_connected_layer(x)
         x = self.softmax_layer(x)
 
         return x
-
-
-# Creating ResNet-20 and ResNet-32 models
-resnet_20 = ResNet(residual_blocks_count=3)
-resnet_32 = ResNet(residual_blocks_count=5)
