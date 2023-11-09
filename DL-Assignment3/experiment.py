@@ -8,6 +8,11 @@ Experiment 2: Compare the performance of BaseNet and ResNet
 2. Compare the training and testing accuracy over epoch for BaseNet-32 and ResNet-32.
 3.  Compare the training and testing loss over epoch for BaseNet-20 and ResNet-20.
 4. Compare the training and testing loss over epoch for BaseNet-32 and ResNet-32.
+
+Experiment 3: How different optimizer affect the convergence?
+For BaseNet-32 and ResNet-32 model using different optimizer: learning schedule, momentum and adam.
+1. Compare the training accuracy over epochs.
+2. Compare the training loss over epochs.
 """
 
 import torch
@@ -362,7 +367,7 @@ if __name__ == "__main__":
 
     PlotGeneration.line_plotting(results6, labels6, title="Loss between BaseNet-32 & ResNet-32")
 
-    # ------ Compare the training accuracy and loss over epochs
+    # ------ Compare the training accuracy over epochs
     # ------ for BaseNet-32 and ResNet-32 model using different optimizer
     results7 = [
         base_net_32_training_accuracy_for_adam, res_net_32_training_accuracy_for_adam
@@ -374,6 +379,8 @@ if __name__ == "__main__":
 
     PlotGeneration.line_plotting(results7, labels7, y_label="Accuracy (%)", title="Accuracy between BaseNet-32 & ResNet-32 with different optimizer")
 
+    # ------ Compare the training loss over epochs
+    # ------ for BaseNet-32 and ResNet-32 model using different optimizer
     results8 = [
         base_net_32_training_losses_for_adam, res_net_32_training_losses_for_adam
     ]
